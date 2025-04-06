@@ -13,4 +13,8 @@ addict
 imageio
 requests
 basicsr
+facexlib
+gfpgan
+realesrgan
 python-telegram-bot==20.6
+python-dotenv
