@@ -1,10 +1,10 @@
 import os
 from flask import Flask
 from threading import Thread
-from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 from telegram import Update, InputFile
+from telegram.ext import Application, MessageHandler, ContextTypes, filters
 from dotenv import load_dotenv
-from enhancer import enhance_image
+from basicsr_test import enhance_image  # ✅ Changed from enhancer.py
 from uuid import uuid4
 
 load_dotenv()
@@ -47,13 +47,13 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(f"❌ Error: {e}")
     finally:
-        os.remove(input_path)
-        os.remove(output_path)
+        if os.path.exists(input_path): os.remove(input_path)
+        if os.path.exists(output_path): os.remove(output_path)
 
 def run_bot():
-    application = ApplicationBuilder().token(BOT_TOKEN).build()
-    application.add_handler(MessageHandler(filters.PHOTO, photo_handler))
-    application.run_polling()
+    app_telegram = Application.builder().token(BOT_TOKEN).build()
+    app_telegram.add_handler(MessageHandler(filters.PHOTO, photo_handler))
+    app_telegram.run_polling()
 
 def run_flask():
     app.run(host='0.0.0.0', port=8080)
