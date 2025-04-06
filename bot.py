@@ -17,7 +17,6 @@ app = Flask(__name__)
 def home():
     return "🤖 Remini Bot is Running!"
 
-# Telegram Bot
 async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message or not update.message.photo:
         return
