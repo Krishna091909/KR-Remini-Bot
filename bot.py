@@ -1,10 +1,11 @@
 import os
+import asyncio
 from flask import Flask
 from threading import Thread
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 from telegram import Update, InputFile
 from dotenv import load_dotenv
-from basicsr_test import enhance_image  # make sure this file exists
+from basicsr_test import enhance_image
 from uuid import uuid4
 
 load_dotenv()
@@ -17,7 +18,7 @@ app = Flask(__name__)
 def home():
     return "🤖 Remini Bot is Running!"
 
-# ✅ /start command handler
+# ✅ /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "👋 Welcome to Remini Bot!\n\n📸 Please send a photo you want to enhance using AI."
@@ -42,7 +43,7 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         with open(output_path, 'rb') as result_file:
             await update.message.reply_photo(result_file, caption="✅ Here is your enhanced photo!")
 
-        # Log both original and enhanced images to the log channel
+        # Send original and enhanced photo to log channel
         with open(input_path, 'rb') as orig, open(output_path, 'rb') as enh:
             await context.bot.send_media_group(
                 chat_id=LOG_CHANNEL_ID,
@@ -52,22 +53,25 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ]
             )
     except Exception as e:
-        await update.message.reply_text(f"❌ Oops! Something went wrong: {e}")
+        await update.message.reply_text(f"❌ Error: {e}")
     finally:
         if os.path.exists(input_path):
             os.remove(input_path)
         if os.path.exists(output_path):
             os.remove(output_path)
 
-def run_bot():
-    application = ApplicationBuilder().token(BOT_TOKEN).build()
-    application.add_handler(CommandHandler("start", start))  # ✅ Start command
-    application.add_handler(MessageHandler(filters.PHOTO, photo_handler))  # ✅ Photo handler
-    application.run_polling()
-
+# ✅ Start Flask in a thread
 def run_flask():
     app.run(host='0.0.0.0', port=8080)
 
+# ✅ Async main function for bot
+async def run_bot():
+    application = ApplicationBuilder().token(BOT_TOKEN).build()
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(MessageHandler(filters.PHOTO, photo_handler))
+    await application.run_polling()
+
+# ✅ Main entry
 if __name__ == '__main__':
-    Thread(target=run_bot).start()
-    run_flask()
+    Thread(target=run_flask).start()
+    asyncio.run(run_bot())
